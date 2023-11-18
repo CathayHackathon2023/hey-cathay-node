@@ -1,7 +1,8 @@
-import express from "express";
+import express, { query } from "express";
 import "dotenv/config";
 import mongoose from "mongoose";
-import Users from "./models/user.js";
+import Flights from "./models/flight.js";
+import Bookings from "./models/booking.js";
 
 
 const app = express();
@@ -18,18 +19,39 @@ database.once('connected', ()=>{
 
 app.use(express.json());
 
-app.get("/users", async (req, res)=>{
-    const users = await Users.find();
-    res.status(200).json(users);
-})
-app.post("/users", async (req, res)=>{
-    const user = await Users.create({
-        name: "Lingo",
-        age: 21
-    });
-
-    res.status(201).json(user);
+app.get("/flights", async (req, res)=>{
+    const filters = req.query;
+    const flights = await Flights.find(filters);
+    res.status(200).json(flights);
 });
+
+app.post("/flightS/bulk", async (req, res)=>{
+    const data = req.body;
+    const flights = await Flights.insertMany(data);
+    res.status(201).json(flights);
+});
+
+app.post("/bookings/bulk", async(req, res)=>{
+    const data = req.body;
+    const bookings = await Bookings.insertMany(data);
+    return res.status(201).json(bookings);
+});
+
+app.get("/bookings/:customerId/", async(req, res)=>{
+    const customerId = req.params.customerId;
+    const filters = req.query;
+    const bookings = await bookings.find({customerId, ...filters})
+    res.status(200).json(bookings);
+});
+
+app.get("/bookings/:customerId/upcoming", async(req, res)=>{
+    const customerId = req.params.customerId;
+    const bookings = await bookings.find({
+        date:{$gte: Date.now()}
+    })
+})
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, ()=>{
     console.log(`Server started at ${PORT}`);
